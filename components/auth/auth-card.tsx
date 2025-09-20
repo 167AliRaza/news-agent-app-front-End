@@ -4,7 +4,8 @@ import type React from "react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { X, Mail, ChevronDown, Eye, EyeOff } from "lucide-react"
+import { X, Mail, Eye, EyeOff, Lock } from "lucide-react"
+import { PasswordStrength } from "./password-strength"
 
 interface AuthCardProps {
   isLoading: boolean
@@ -34,7 +35,6 @@ export function AuthCard({
   const [activeTab, setActiveTab] = useState("signup")
   const [firstName, setFirstName] = useState("John")
   const [lastName, setLastName] = useState("")
-  const [phoneNumber, setPhoneNumber] = useState("(775) 351-6501")
   const [showPassword, setShowPassword] = useState(false)
 
   const handleRedirect = () => {
@@ -85,10 +85,7 @@ export function AuthCard({
           >
             {/* Sign Up Form */}
             <form
-              onSubmit={(e) => {
-                e.preventDefault()
-                handleRedirect()
-              }}
+              onSubmit={onSignUp}
               className="space-y-4"
             >
               {/* Name fields */}
@@ -100,6 +97,7 @@ export function AuthCard({
                     onChange={(e) => setFirstName(e.target.value)}
                     className="bg-black/20 backdrop-blur-sm border border-white/10 rounded-2xl h-14 text-white placeholder:text-white/40 focus:border-white/30 focus:ring-0 text-base transition-all duration-200 hover:bg-black/30 focus:bg-black/30"
                     placeholder="First name"
+                    required
                   />
                 </div>
                 <div className="relative">
@@ -109,6 +107,7 @@ export function AuthCard({
                     onChange={(e) => setLastName(e.target.value)}
                     className="bg-black/20 backdrop-blur-sm border border-white/10 rounded-2xl h-14 text-white placeholder:text-white/40 focus:border-white/30 focus:ring-0 text-base transition-all duration-200 hover:bg-black/30 focus:bg-black/30"
                     placeholder="Last name"
+                    required
                   />
                 </div>
               </div>
@@ -122,27 +121,30 @@ export function AuthCard({
                   onChange={(e) => setEmail(e.target.value)}
                   className="bg-black/20 backdrop-blur-sm border border-white/10 rounded-2xl h-14 text-white placeholder:text-white/40 focus:border-white/30 focus:ring-0 pl-12 text-base transition-all duration-200 hover:bg-black/30 focus:bg-black/30"
                   placeholder="Enter your email"
+                  required
                 />
               </div>
 
-              {/* Phone field */}
+              {/* Password field */}
               <div className="relative">
-                <div className="absolute left-4 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
-                  <div className="w-6 h-4 bg-red-500 relative overflow-hidden rounded-sm">
-                    <div className="absolute inset-0 bg-red-500"></div>
-                    <div className="absolute top-0 left-0 w-2 h-full bg-blue-600"></div>
-                    <div className="absolute top-1 left-1 w-1 h-0.5 bg-white"></div>
-                  </div>
-                  <ChevronDown className="w-4 h-4 text-white/40" />
-                </div>
+                <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white/40 transition-colors duration-200" />
                 <Input
-                  type="tel"
-                  value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value)}
-                  className="bg-black/20 backdrop-blur-sm border border-white/10 rounded-2xl h-14 text-white placeholder:text-white/40 focus:border-white/30 focus:ring-0 pl-20 text-base transition-all duration-200 hover:bg-black/30 focus:bg-black/30"
-                  placeholder="Phone number"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="bg-black/20 backdrop-blur-sm border border-white/10 rounded-2xl h-14 text-white placeholder:text-white/40 focus:border-white/30 focus:ring-0 pl-12 pr-12 text-base transition-all duration-200 hover:bg-black/30 focus:bg-black/30"
+                  placeholder="Create a password"
+                  required
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-white/40 hover:text-white/60 transition-colors duration-200"
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
               </div>
+              <PasswordStrength password={password} />
 
               {/* Create account button */}
               <Button
@@ -161,10 +163,7 @@ export function AuthCard({
             }`}
           >
             <form
-              onSubmit={(e) => {
-                e.preventDefault()
-                handleRedirect()
-              }}
+              onSubmit={onSignIn}
               className="space-y-4"
             >
               {/* Email field */}
@@ -176,17 +175,20 @@ export function AuthCard({
                   onChange={(e) => setEmail(e.target.value)}
                   className="bg-black/20 backdrop-blur-sm border border-white/10 rounded-2xl h-14 text-white placeholder:text-white/40 focus:border-white/30 focus:ring-0 pl-12 text-base transition-all duration-200 hover:bg-black/30 focus:bg-black/30"
                   placeholder="Enter your email"
+                  required
                 />
               </div>
 
               {/* Password field */}
               <div className="relative">
+                <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white/40 transition-colors duration-200" />
                 <Input
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="bg-black/20 backdrop-blur-sm border border-white/10 rounded-2xl h-14 text-white placeholder:text-white/40 focus:border-white/30 focus:ring-0 pr-12 text-base transition-all duration-200 hover:bg-black/30 focus:bg-black/30"
+                  className="bg-black/20 backdrop-blur-sm border border-white/10 rounded-2xl h-14 text-white placeholder:text-white/40 focus:border-white/30 focus:ring-0 pl-12 pr-12 text-base transition-all duration-200 hover:bg-black/30 focus:bg-black/30"
                   placeholder="Enter your password"
+                  required
                 />
                 <button
                   type="button"
