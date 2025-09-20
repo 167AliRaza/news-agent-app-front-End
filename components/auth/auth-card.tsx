@@ -4,42 +4,125 @@ import type React from "react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { X, Mail, Eye, EyeOff, Lock } from "lucide-react"
+import { X, Mail, Eye, EyeOff, Lock, Loader2 } from "lucide-react"
 import { PasswordStrength } from "./password-strength"
+import { useToast } from "@/hooks/use-toast"
+import { loginUser, signupUser } from "@/lib/api"
 
 interface AuthCardProps {
-  isLoading: boolean
-  email: string
-  setEmail: (email: string) => void
-  password: string
-  setPassword: (password: string) => void
-  rememberMe: boolean
-  setRememberMe: (remember: boolean) => void
-  onSignIn: (e: React.FormEvent) => void
-  onSignUp: (e: React.FormEvent) => void
-  onForgotPassword: () => void
+  // isLoading is now managed internally, but kept as prop if parent needs to override
+  // email, password, rememberMe are now managed internally
+  onForgotPassword: () => void; // This remains a prop as it's an external action
 }
 
 export function AuthCard({
-  isLoading,
-  email,
-  setEmail,
-  password,
-  setPassword,
-  rememberMe,
-  setRememberMe,
-  onSignIn,
-  onSignUp,
   onForgotPassword,
 }: AuthCardProps) {
-  const [activeTab, setActiveTab] = useState("signup")
-  const [firstName, setFirstName] = useState("John")
-  const [lastName, setLastName] = useState("")
-  const [showPassword, setShowPassword] = useState(false)
+  const [activeTab, setActiveTab] = useState("signup");
+  const [isLoading, setIsLoading] = useState(false);
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const { toast } = useToast();
 
   const handleRedirect = () => {
-    window.open("https://www.linkedin.com/in/167aliraza/", "_blank")
-  }
+    window.open("https://www.linkedin.com/in/167aliraza/", "_blank");
+  };
+
+  const validateEmail = (email: string) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  };
+
+  const handleSignInSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    if (!validateEmail(email)) {
+      toast({
+        title: "Invalid email",
+        description: "Please enter a valid email address.",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+      return;
+    }
+
+    const result = await loginUser(email, password);
+    if (result) {
+      // Handle successful login, e.g., store token, redirect
+      console.log("Login successful:", result);
+      // Optionally clear form fields
+      setEmail("");
+      setPassword("");
+      setRememberMe(false);
+    }
+    setIsLoading(false);
+  };
+
+  const handleSignUpSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    if (!firstName || !lastName || !email || !password || !confirmPassword) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in all required fields.",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+      return;
+    }
+
+    if (!validateEmail(email)) {
+      toast({
+        title: "Invalid email",
+        description: "Please enter a valid email address.",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      toast({
+        title: "Passwords Mismatch",
+        description: "The password and confirmation password do not match.",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+      return;
+    }
+
+    // Basic password length check (more detailed checks are in PasswordStrength component)
+    if (password.length < 8) {
+      toast({
+        title: "Password Too Short",
+        description: "Password must be at least 8 characters long.",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+      return;
+    }
+
+    const fullName = `${firstName} ${lastName}`;
+    const result = await signupUser(fullName, email, password);
+    if (result) {
+      // Handle successful signup, e.g., store token, redirect, or switch to sign-in tab
+      console.log("Sign up successful:", result);
+      // Optionally clear form fields and switch to sign-in
+      setFirstName("");
+      setLastName("");
+      setEmail("");
+      setPassword("");
+      setConfirmPassword("");
+      setActiveTab("signin"); // Suggest switching to sign-in after successful registration
+    }
+    setIsLoading(false);
+  };
 
   return (
     <div className="w-full max-w-md mx-auto">
@@ -85,7 +168,7 @@ export function AuthCard({
           >
             {/* Sign Up Form */}
             <form
-              onSubmit={onSignUp}
+              onSubmit={handleSignUpSubmit}
               className="space-y-4"
             >
               {/* Name fields */}
@@ -146,13 +229,33 @@ export function AuthCard({
               </div>
               <PasswordStrength password={password} />
 
+              {/* Confirm Password field */}
+              <div className="relative">
+                <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white/40 transition-colors duration-200" />
+                <Input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="bg-black/20 backdrop-blur-sm border border-white/10 rounded-2xl h-14 text-white placeholder:text-white/40 focus:border-white/30 focus:ring-0 pl-12 text-base transition-all duration-200 hover:bg-black/30 focus:bg-black/30"
+                  placeholder="Confirm password"
+                  required
+                />
+              </div>
+
               {/* Create account button */}
               <Button
                 type="submit"
                 className="w-full bg-white/20 backdrop-blur-sm border border-white/20 hover:bg-white/30 text-white font-medium rounded-2xl h-14 mt-8 text-base transition-all duration-300 transform hover:scale-[1.02] hover:shadow-lg active:scale-[0.98]"
                 disabled={isLoading}
               >
-                {isLoading ? "Creating account..." : "Create an account"}
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Creating account...
+                  </>
+                ) : (
+                  "Create an account"
+                )}
               </Button>
             </form>
           </div>
@@ -163,7 +266,7 @@ export function AuthCard({
             }`}
           >
             <form
-              onSubmit={onSignIn}
+              onSubmit={handleSignInSubmit}
               className="space-y-4"
             >
               {/* Email field */}
@@ -225,7 +328,14 @@ export function AuthCard({
                 className="w-full bg-white/20 backdrop-blur-sm border border-white/20 hover:bg-white/30 text-white font-medium rounded-2xl h-14 mt-8 text-base transition-all duration-300 transform hover:scale-[1.02] hover:shadow-lg active:scale-[0.98]"
                 disabled={isLoading}
               >
-                {isLoading ? "Signing in..." : "Sign in"}
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Signing in...
+                  </>
+                ) : (
+                  "Sign in"
+                )}
               </Button>
             </form>
           </div>

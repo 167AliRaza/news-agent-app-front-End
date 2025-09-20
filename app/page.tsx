@@ -1,69 +1,12 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
 import { useToast } from "@/hooks/use-toast"
 import { Toaster } from "@/components/ui/toaster"
 import { AuthCard } from "@/components/auth/auth-card"
 
 export default function AuthPage() {
-  const [isLoading, setIsLoading] = useState(false)
-  const [password, setPassword] = useState("")
-  const [email, setEmail] = useState("")
-  const [rememberMe, setRememberMe] = useState(false)
   const { toast } = useToast()
-
-  const validateEmail = (email: string) => {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
-  }
-
-  const handleSignIn = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (!validateEmail(email)) {
-      toast({
-        title: "Invalid email",
-        description: "Please enter a valid email address.",
-        variant: "destructive",
-      })
-      return
-    }
-
-    setIsLoading(true)
-
-    // Simulate authentication
-    setTimeout(() => {
-      setIsLoading(false)
-      toast({
-        title: "Signed in successfully!",
-        description: "Welcome back to your account.",
-      })
-    }, 1500)
-  }
-
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (password.length < 6) {
-      toast({
-        title: "Password too short",
-        description: "Password must be at least 6 characters long.",
-        variant: "destructive",
-      })
-      return
-    }
-
-    setIsLoading(true)
-
-    // Simulate registration
-    setTimeout(() => {
-      setIsLoading(false)
-      toast({
-        title: "Account created!",
-        description: "Your account has been created successfully.",
-      })
-    }, 1500)
-  }
 
   const handleForgotPassword = () => {
     toast({
@@ -83,15 +26,6 @@ export default function AuthPage() {
       }}
     >
       <AuthCard
-        isLoading={isLoading}
-        email={email}
-        setEmail={setEmail}
-        password={password}
-        setPassword={setPassword}
-        rememberMe={rememberMe}
-        setRememberMe={setRememberMe}
-        onSignIn={handleSignIn}
-        onSignUp={handleSignUp}
         onForgotPassword={handleForgotPassword}
       />
       <Toaster />
