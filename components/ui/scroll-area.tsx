@@ -38,9 +38,9 @@ function ScrollBar({
       data-slot="scroll-area-scrollbar"
       orientation={orientation}
       className={cn(
-        'flex touch-none select-none transition-colors',
-        orientation === 'vertical' && 'h-full w-2',
-        orientation === 'horizontal' && 'h-2 flex-col',
+        'flex touch-none select-none',
+        orientation === 'vertical' && 'h-full w-1.5',
+        orientation === 'horizontal' && 'h-1.5 flex-col',
         className,
       )}
       {...props}

@@ -100,11 +100,20 @@ export function ChatLayout({
               !isSidebarCollapsed && <p className="text-white/50 text-sm text-center">No threads yet.</p>
             ) : (
               threads.map((thread) => (
-                <div key={thread.thread_id} className="relative flex items-center group">
+                <div 
+                  key={thread.thread_id} 
+                  className="relative flex items-center group"
+                  onContextMenu={(e) => {
+                    e.preventDefault();
+                    if (window.confirm("Are you sure you want to delete this thread? This action cannot be undone.")) {
+                      onDeleteThread(thread.thread_id);
+                    }
+                  }}
+                >
                   <Button
                     variant="ghost"
                     className={cn(
-                      "w-full justify-start text-white/80 hover:text-white hover:bg-white/10 rounded-lg px-3 py-2 transition-colors duration-200",
+                      "w-full justify-start text-white/80 hover:text-white hover:bg-white/10 rounded-lg px-3 py-2 transition-colors duration-200 pr-11",
                       currentThreadId === thread.thread_id && "bg-white/10 text-white"
                     )}
                     onClick={() => onThreadClick(thread.thread_id)}
@@ -118,12 +127,13 @@ export function ChatLayout({
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="absolute right-0 text-white/50 hover:text-red-400 hover:bg-white/10 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-white/40 hover:text-red-400 hover:bg-red-500/20 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110 z-10"
                       onClick={(e) => {
                         e.stopPropagation(); // Prevent thread selection when deleting
                         onDeleteThread(thread.thread_id);
                       }}
                       aria-label="Delete thread"
+                      title="Delete thread (or right-click)"
                     >
                       <Trash2Icon className="w-4 h-4" />
                     </Button>
