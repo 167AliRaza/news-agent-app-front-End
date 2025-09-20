@@ -37,7 +37,7 @@ export default function ChatPage() {
     setIsLoadingThreads(true);
     const fetchedThreads = await fetchUserThreads();
     if (fetchedThreads) {
-      setThreads(fetchedThreads);
+      setThreads(fetchedThreads.reverse());
     }
     setIsLoadingThreads(false);
   };
