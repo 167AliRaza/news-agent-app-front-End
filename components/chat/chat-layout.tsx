@@ -127,12 +127,14 @@ export function ChatLayout({
                     variant="ghost"
                     className={cn(
                       "w-full justify-start text-white/80 hover:text-white hover:bg-white/10 rounded-lg px-3 py-2 transition-colors duration-200",
-                      !isSidebarCollapsed ? "pl-14 pr-3" : "px-3", // Adjusted padding for icon to clear delete button
+                      !isSidebarCollapsed ? "pl-10 pr-3" : "px-3", // Adjusted padding for icon to clear delete button
                       currentThreadId === thread.thread_id && "bg-white/10 text-white"
                     )}
                     onClick={() => onThreadClick(thread.thread_id)}
                   >
-                    <MessageSquareTextIcon className={cn("w-4 h-4", !isSidebarCollapsed && "mr-2 text-white/60")} />
+                    {isSidebarCollapsed && ( // Only show MessageSquareTextIcon when collapsed
+                      <MessageSquareTextIcon className="w-4 h-4 mr-2 text-white/60" />
+                    )}
                     {!isSidebarCollapsed && (
                       <span className="truncate">{thread.title || `Untitled Chat ${thread.thread_id.substring(0, 4)}`}</span>
                     )}
