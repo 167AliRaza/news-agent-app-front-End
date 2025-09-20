@@ -65,13 +65,6 @@ export default function AuthPage() {
     }, 1500)
   }
 
-  const handleSocialLogin = (provider: string) => {
-    toast({
-      title: `${provider} login`,
-      description: `Redirecting to ${provider}...`,
-    })
-  }
-
   const handleForgotPassword = () => {
     toast({
       title: "Reset link sent",
@@ -99,7 +92,6 @@ export default function AuthPage() {
         setRememberMe={setRememberMe}
         onSignIn={handleSignIn}
         onSignUp={handleSignUp}
-        onSocialLogin={handleSocialLogin}
         onForgotPassword={handleForgotPassword}
       />
       <Toaster />

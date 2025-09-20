@@ -21,7 +21,6 @@ interface AuthFormProps {
   setRememberMe: (remember: boolean) => void
   onSignIn: (e: React.FormEvent) => void
   onSignUp: (e: React.FormEvent) => void
-  onSocialLogin: (provider: string) => void
   onForgotPassword: () => void
 }
 
@@ -35,7 +34,6 @@ export function AuthForm({
   setRememberMe,
   onSignIn,
   onSignUp,
-  onSocialLogin,
   onForgotPassword,
 }: AuthFormProps) {
   const [showPassword, setShowPassword] = useState(false)
