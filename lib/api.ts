@@ -322,13 +322,35 @@ export async function fetchThreadMessages(threadId: string): Promise<ThreadMessa
     }
 
     const data: ThreadMessagesResponse = await response.json();
-    // Assuming the API returns messages in chronological order, or we sort them.
-    // For now, let's assume they are ordered correctly.
-    return data.messages.map(msg => ({
-      ...msg,
-      isUser: msg.isUser, // Ensure isUser is correctly mapped
-      text: typeof msg.text === 'string' ? msg.text : JSON.stringify(msg.text, null, 2)
-    }));
+    
+    // Process messages to handle structured text content
+    return data.messages.map(msg => {
+      let formattedText = msg.text;
+      try {
+        const parsedText = JSON.parse(msg.text);
+        if (typeof parsedText === 'object' && parsedText !== null && 'query' in parsedText && 'search_results' in parsedText) {
+          if (msg.isUser) {
+            formattedText = parsedText.query || "User query (details in console)";
+          } else {
+            // Agent's response
+            const searchResults = parsedText.search_results;
+            if (Array.isArray(searchResults) && searchResults.length > 0) {
+              formattedText = `Agent found ${searchResults.length} relevant results.`;
+            } else {
+              formattedText = "Agent processed your query.";
+            }
+          }
+        }
+      } catch (e) {
+        // If parsing fails, it's a plain string, so use original msg.text
+      }
+
+      return {
+        ...msg,
+        isUser: msg.isUser,
+        text: formattedText,
+      };
+    });
   } catch (error) {
     console.error("Fetch thread messages API error:", error);
     toast({
