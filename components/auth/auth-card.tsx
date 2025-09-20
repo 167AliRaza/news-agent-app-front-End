@@ -110,7 +110,7 @@ export function AuthCard({
               className={`px-6 py-2 rounded-full text-sm font-medium transition-all duration-300 transform hover:scale-105 ${
                 activeTab === "signup"
                   ? "bg-white/20 backdrop-blur-sm text-white border border-white/20 shadow-lg"
-                  : "text-white/60 hover:text-white hover:bg-white/5"
+                  : "bg-white/5 border-white/5 text-white/60 hover:text-white hover:bg-white/10"
               }`}
             >
               Sign up
@@ -120,7 +120,7 @@ export function AuthCard({
               className={`px-6 py-2 rounded-full text-sm font-medium transition-all duration-300 transform hover:scale-105 ${
                 activeTab === "signin"
                   ? "bg-white/20 backdrop-blur-sm text-white border border-white/20 shadow-lg"
-                  : "text-white/60 hover:text-white hover:bg-white/5"
+                  : "bg-white/5 border-white/5 text-white/60 hover:text-white hover:bg-white/10"
               }`}
             >
               Sign in
