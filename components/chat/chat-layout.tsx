@@ -125,9 +125,9 @@ export function ChatLayout({
                   </Button>
                   {!isSidebarCollapsed && (
                     <Button
-                      variant="ghost"
+                      variant="destructive" // Changed to destructive variant
                       size="icon"
-                      className="absolute right-2 top-1/2 -translate-y-1/2 bg-red-600/50 text-white hover:bg-red-500/70 rounded-full transition-all duration-200 hover:scale-110 z-10" // Added distinct background and text color
+                      className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full transition-all duration-200 hover:scale-110 z-10" // Removed custom bg/text as destructive variant handles it
                       onClick={(e) => {
                         e.stopPropagation(); // Prevent thread selection when deleting
                         onDeleteThread(thread.thread_id);
