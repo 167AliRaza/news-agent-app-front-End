@@ -38,7 +38,7 @@ export function AuthCard({
   const [showPassword, setShowPassword] = useState(false)
 
   const handleRedirect = () => {
-    window.open("https://www.youtube.com/@diecastbydollarall", "_blank")
+    window.open("https://www.linkedin.com/in/167aliraza/", "_blank")
   }
 
   return (
@@ -244,7 +244,7 @@ export function AuthCard({
               onClick={handleRedirect}
               className="text-white/50 hover:text-white/70 underline transition-colors duration-200"
             >
-              Dollar Gill
+              Ali Raza
             </button>
           </p>
         </div>
