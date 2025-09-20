@@ -127,7 +127,7 @@ export function ChatLayout({
                     variant="ghost"
                     className={cn(
                       "w-full justify-start text-white/80 hover:text-white hover:bg-white/10 rounded-lg px-3 py-2 transition-colors duration-200",
-                      !isSidebarCollapsed ? "pl-10 pr-3" : "px-3", // Adjusted padding for icon
+                      !isSidebarCollapsed ? "pl-14 pr-3" : "px-3", // Adjusted padding for icon to clear delete button
                       currentThreadId === thread.thread_id && "bg-white/10 text-white"
                     )}
                     onClick={() => onThreadClick(thread.thread_id)}
