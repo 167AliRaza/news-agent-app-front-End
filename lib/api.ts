@@ -110,16 +110,13 @@ export async function signupUser(name: string, email: string, password: string, 
 
 export async function loginUser(email: string, password: string, router: AppRouterInstance): Promise<AuthResponse | null> {
   try {
-    const formData = new URLSearchParams();
-    formData.append("username", email);
-    formData.append("password", password);
-
+    // Changed to send JSON body instead of form-urlencoded
     const response = await fetch(`${BASE_URL}/auth/login`, {
       method: "POST",
       headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
+        "Content-Type": "application/json", // Changed content type
       },
-      body: formData.toString(),
+      body: JSON.stringify({ email, password }), // Changed body to JSON
     });
 
     if (!response.ok) {
