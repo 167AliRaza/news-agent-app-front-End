@@ -90,7 +90,7 @@ export function ChatLayout({
         </div>
 
         {/* Chat Threads Section */}
-        <ScrollArea className="flex-1 mb-4">
+        <ScrollArea className="flex-1 -mr-4 pr-4 mb-4">
           <div className="space-y-2">
             {isLoadingThreads ? (
               <div className="flex justify-center py-4">
