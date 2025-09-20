@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,7 +31,9 @@ export default function ChatPage() {
   const [currentThreadId, setCurrentThreadId] = useState<string | null>(null);
   const [threads, setThreads] = useState<Thread[]>([]);
   const [isLoadingThreads, setIsLoadingThreads] = useState(true);
+  const [isAgentThinking, setIsAgentThinking] = useState(false); // New state for agent thinking
   const router = useRouter();
+  const scrollAreaRef = useRef<HTMLDivElement>(null); // Ref for ScrollArea
 
   const loadThreads = async () => {
     setIsLoadingThreads(true);
@@ -48,7 +50,7 @@ export default function ChatPage() {
 
   useEffect(() => {
     const loadThreadConversation = async () => {
-      if (currentThreadId && !currentThreadId.startsWith('local-')) { // Don't fetch for local threads
+      if (currentThreadId && !currentThreadId.startsWith('local-')) {
         setIsLoadingMessages(true);
         setMessages([]);
         const fetchedMessages = await fetchThreadMessages(currentThreadId);
@@ -69,6 +71,13 @@ export default function ChatPage() {
     loadThreadConversation();
   }, [currentThreadId]);
 
+  // Auto-scroll to bottom when messages change
+  useEffect(() => {
+    if (scrollAreaRef.current) {
+      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
+    }
+  }, [messages]);
+
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (inputMessage.trim() === "") return;
@@ -80,9 +89,15 @@ export default function ChatPage() {
       isUser: true,
     };
 
-    setMessages((prevMessages) => [...prevMessages, newUserMessage]);
+    // Add user message and "Thinking..." message immediately
+    setMessages((prevMessages) => [
+      ...prevMessages,
+      newUserMessage,
+      { id: "thinking", text: "Thinking...", isUser: false }, // Placeholder for agent thinking
+    ]);
     setInputMessage("");
     setIsSending(true);
+    setIsAgentThinking(true); // Set agent thinking state
 
     let threadIdToUse = currentThreadId;
     let isNewChat = !currentThreadId;
@@ -106,27 +121,32 @@ export default function ChatPage() {
         isNewChat
       );
 
-      if (response) {
-        const aiResponseText = typeof response.result === 'string'
-          ? response.result
-          : JSON.stringify(response.result, null, 2);
+      setMessages((prevMessages) => {
+        // Remove the "Thinking..." placeholder
+        const updatedMessages = prevMessages.filter((msg) => msg.id !== "thinking");
+        if (response) {
+          const aiResponseText = typeof response.result === 'string'
+            ? response.result
+            : JSON.stringify(response.result, null, 2);
 
-        const newAiMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          text: aiResponseText,
-          isUser: false,
-        };
-        setMessages((prevMessages) => [...prevMessages, newAiMessage]);
-
-        if (response.is_new_thread && localThreadId) {
-          // Update local thread with real ID from backend
-          setThreads(prev => prev.map(t => 
-            t.thread_id === localThreadId ? { ...t, thread_id: response.thread_id } : t
-          ));
-          setCurrentThreadId(response.thread_id);
-          // After a new thread is successfully created, reload all threads to get the server-generated title
-          await loadThreads();
+          const newAiMessage: Message = {
+            id: (Date.now() + 1).toString(),
+            text: aiResponseText,
+            isUser: false,
+          };
+          return [...updatedMessages, newAiMessage];
         }
+        return updatedMessages; // If no response, just remove thinking message
+      });
+
+      if (response && response.is_new_thread && localThreadId) {
+        // Update local thread with real ID from backend
+        setThreads(prev => prev.map(t => 
+          t.thread_id === localThreadId ? { ...t, thread_id: response.thread_id } : t
+        ));
+        setCurrentThreadId(response.thread_id);
+        // After a new thread is successfully created, reload all threads to get the server-generated title
+        await loadThreads();
       }
     } catch (error) {
       console.error("Error sending message to AI:", error);
@@ -135,13 +155,15 @@ export default function ChatPage() {
         description: "Failed to get a response from the AI. Please try again.",
         variant: "destructive",
       });
-      // If it was a new chat that failed, remove the local thread
+      // If it was a new chat that failed, remove the local thread and the thinking message
+      setMessages((prevMessages) => prevMessages.filter((msg) => msg.id !== "thinking"));
       if (localThreadId) {
         setThreads(prev => prev.filter(t => t.thread_id !== localThreadId));
         setCurrentThreadId(null);
       }
     } finally {
       setIsSending(false);
+      setIsAgentThinking(false); // Reset agent thinking state
     }
   };
 
@@ -201,14 +223,14 @@ export default function ChatPage() {
             </Button>
           </div>
 
-          <ScrollArea className="flex-1 -mr-4 pr-4 mb-4">
+          <ScrollArea className="flex-1 -mr-4 pr-4 mb-4" ref={scrollAreaRef}>
             <div className="flex flex-col">
               {isLoadingMessages ? (
                 <div className="flex flex-col items-center justify-center h-full text-white/50 text-lg">
                   <Loader2 className="w-8 h-8 animate-spin mb-4" />
                   <p>Loading messages...</p>
                 </div>
-              ) : messages.length === 0 ? (
+              ) : messages.length === 0 && !isAgentThinking ? (
                 <div className="flex flex-col items-center justify-center h-full text-white/50 text-lg">
                   <MessageSquareTextIcon className="w-12 h-12 mb-4" />
                   <p>Start a conversation...</p>
@@ -228,14 +250,14 @@ export default function ChatPage() {
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
               className="flex-1 bg-black/20 border-white/10 text-white placeholder:text-white/40 focus:border-white/30 focus:ring-0 rounded-2xl h-12 text-base transition-all duration-200 hover:bg-black/30 focus:bg-black/30"
-              disabled={isSending || isLoadingMessages}
+              disabled={isSending || isLoadingMessages || isAgentThinking}
             />
             <Button
               type="submit"
               className="bg-[#007aff] hover:bg-[#0056cc] text-white rounded-2xl h-12 w-12 flex items-center justify-center transition-all duration-200 transform hover:scale-105 active:scale-95"
-              disabled={isSending || inputMessage.trim() === "" || isLoadingMessages}
+              disabled={isSending || inputMessage.trim() === "" || isLoadingMessages || isAgentThinking}
             >
-              {isSending ? (
+              {isSending || isAgentThinking ? (
                 <Loader2 className="h-5 w-5 animate-spin" />
               ) : (
                 <SendHorizonalIcon className="h-5 w-5" />
