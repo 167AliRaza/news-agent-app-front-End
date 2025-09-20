@@ -110,9 +110,13 @@ export async function signupUser(name: string, email: string, password: string, 
 
 export async function loginUser(email: string, password: string, router: AppRouterInstance): Promise<AuthResponse | null> {
   try {
+    console.log("API Login attempt:", { email, password: password ? "***" : "empty" });
+    
     const formBody = new URLSearchParams();
     formBody.append("username", email); // FastAPI expects 'username' for email in form data
     formBody.append("password", password);
+
+    console.log("Request body:", formBody.toString());
 
     const response = await fetch(`${BASE_URL}/auth/login`, {
       method: "POST",
@@ -121,6 +125,8 @@ export async function loginUser(email: string, password: string, router: AppRout
       },
       body: formBody.toString(),
     });
+
+    console.log("Response status:", response.status);
 
     if (!response.ok) {
       const errorData = await response.json();

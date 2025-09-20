@@ -14,6 +14,8 @@ interface SignInFormProps {
   isLoading: boolean
   email: string
   setEmail: (email: string) => void
+  password: string
+  setPassword: (password: string) => void
   rememberMe: boolean
   setRememberMe: (remember: boolean) => void
   onForgotPassword: () => void
@@ -24,6 +26,8 @@ export function SignInForm({
   isLoading,
   email,
   setEmail,
+  password,
+  setPassword,
   rememberMe,
   setRememberMe,
   onForgotPassword,
@@ -57,6 +61,8 @@ export function SignInForm({
             id="password"
             type={showPassword ? "text" : "password"}
             placeholder="Enter your password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
             required
             className="bg-[#2c2c2e] border border-[#3a3a3c] text-white placeholder:text-[#8e8e93] focus:border-[#007aff] focus:ring-2 focus:ring-[#007aff]/20 transition-all duration-200 rounded-2xl h-14 pr-14 text-base font-sans"
           />

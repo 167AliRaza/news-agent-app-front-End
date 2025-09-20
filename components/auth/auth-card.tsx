@@ -37,6 +37,8 @@ export function AuthCard({
     e.preventDefault(); // Prevent default form submission if called from a form
     setIsLoading(true);
 
+    console.log("Sign in attempt:", { email, password: password ? "***" : "empty" });
+
     if (!validateEmail(email)) {
       toast({
         title: "Invalid email",
@@ -47,7 +49,18 @@ export function AuthCard({
       return;
     }
 
-    await loginUser(email, password, router); // Pass router instance
+    if (!password || password.trim() === "") {
+      toast({
+        title: "Password required",
+        description: "Please enter your password.",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+      return;
+    }
+
+    const result = await loginUser(email, password, router); // Pass router instance
+    console.log("Login result:", result);
     setIsLoading(false);
   };
 
@@ -161,6 +174,8 @@ export function AuthCard({
               isLoading={isLoading}
               email={email}
               setEmail={setEmail}
+              password={password}
+              setPassword={setPassword}
               rememberMe={rememberMe}
               setRememberMe={setRememberMe}
               onForgotPassword={onForgotPassword}

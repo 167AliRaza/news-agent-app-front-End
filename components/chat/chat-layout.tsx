@@ -105,29 +105,14 @@ export function ChatLayout({
                   className="relative flex items-center group"
                   onContextMenu={(e) => {
                     e.preventDefault();
-                    if (window.confirm("Are you sure you want to delete this thread? This action cannot be undone.")) {
-                      onDeleteThread(thread.thread_id);
-                    }
+                    onDeleteThread(thread.thread_id);
                   }}
                 >
-                  <Button
-                    variant="ghost"
-                    className={cn(
-                      "w-full justify-start text-white/80 hover:text-white hover:bg-white/10 rounded-lg px-3 py-2 transition-colors duration-200 pr-14", // Increased padding-right to make space for delete icon
-                      currentThreadId === thread.thread_id && "bg-white/10 text-white"
-                    )}
-                    onClick={() => onThreadClick(thread.thread_id)}
-                  >
-                    <MessageSquareTextIcon className={cn("w-4 h-4", !isSidebarCollapsed && "mr-2 text-white/60")} />
-                    {!isSidebarCollapsed && (
-                      <span className="truncate">{thread.title || `Untitled Chat ${thread.thread_id.substring(0, 4)}`}</span>
-                    )}
-                  </Button>
                   {!isSidebarCollapsed && (
                     <Button
-                      variant="destructive" // Changed to destructive variant
+                      variant="ghost" // Changed to ghost variant
                       size="icon"
-                      className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full transition-all duration-200 hover:scale-110 z-10" // Removed custom bg/text as destructive variant handles it
+                      className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full transition-all duration-200 hover:scale-110 z-10 text-white/50 hover:text-white hover:bg-white/10" // Custom text color
                       onClick={(e) => {
                         e.stopPropagation(); // Prevent thread selection when deleting
                         onDeleteThread(thread.thread_id);
@@ -138,6 +123,20 @@ export function ChatLayout({
                       <Trash2Icon className="w-4 h-4" />
                     </Button>
                   )}
+                  <Button
+                    variant="ghost"
+                    className={cn(
+                      "w-full justify-start text-white/80 hover:text-white hover:bg-white/10 rounded-lg px-3 py-2 transition-colors duration-200",
+                      !isSidebarCollapsed ? "pl-10 pr-3" : "px-3", // Adjusted padding for icon
+                      currentThreadId === thread.thread_id && "bg-white/10 text-white"
+                    )}
+                    onClick={() => onThreadClick(thread.thread_id)}
+                  >
+                    <MessageSquareTextIcon className={cn("w-4 h-4", !isSidebarCollapsed && "mr-2 text-white/60")} />
+                    {!isSidebarCollapsed && (
+                      <span className="truncate">{thread.title || `Untitled Chat ${thread.thread_id.substring(0, 4)}`}</span>
+                    )}
+                  </Button>
                 </div>
               ))
             )}
