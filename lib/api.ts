@@ -1,4 +1,5 @@
 import { toast } from "@/hooks/use-toast";
+import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime"; // Import type for router
 
 const BASE_URL = "https://167aliraza-news-agent.hf.space";
 
@@ -25,7 +26,7 @@ function getErrorMessage(errorData: any, defaultMessage: string): string {
   return defaultMessage;
 }
 
-export async function signupUser(name: string, email: string, password: string): Promise<AuthResponse | null> {
+export async function signupUser(name: string, email: string, password: string, router: AppRouterInstance): Promise<AuthResponse | null> {
   try {
     const response = await fetch(`${BASE_URL}/auth/signup`, {
       method: "POST",
@@ -48,8 +49,9 @@ export async function signupUser(name: string, email: string, password: string):
     const data: AuthResponse = await response.json();
     toast({
       title: "Sign Up Successful!",
-      description: "Your account has been created. You can now sign in.",
+      description: "Your account has been created. Redirecting to chat...",
     });
+    router.push("/chat"); // Redirect to chat page
     return data;
   } catch (error) {
     console.error("Sign up API error:", error);
@@ -62,7 +64,7 @@ export async function signupUser(name: string, email: string, password: string):
   }
 }
 
-export async function loginUser(email: string, password: string): Promise<AuthResponse | null> {
+export async function loginUser(email: string, password: string, router: AppRouterInstance): Promise<AuthResponse | null> {
   try {
     const formData = new URLSearchParams();
     formData.append("username", email); // Backend expects 'username' for email
@@ -77,8 +79,6 @@ export async function loginUser(email: string, password: string): Promise<AuthRe
     });
 
     if (!response.ok) {
-      // For sign-in failures, we'll use the specific message "Invalid email or password"
-      // regardless of the backend's detailed error message, for security and simplicity.
       toast({
         title: "Sign In Failed",
         description: "Invalid email or password.",
@@ -90,8 +90,9 @@ export async function loginUser(email: string, password: string): Promise<AuthRe
     const data: AuthResponse = await response.json();
     toast({
       title: "Sign In Successful!",
-      description: "Welcome back to your account.",
+      description: "Welcome back to your account. Redirecting to chat...",
     });
+    router.push("/chat"); // Redirect to chat page
     return data;
   } catch (error) {
     console.error("Sign in API error:", error);

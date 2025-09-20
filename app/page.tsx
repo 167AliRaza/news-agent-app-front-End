@@ -1,12 +1,14 @@
 "use client"
 
 import type React from "react"
+import { useRouter } from "next/navigation" // Import useRouter
 import { useToast } from "@/hooks/use-toast"
 import { Toaster } from "@/components/ui/toaster"
 import { AuthCard } from "@/components/auth/auth-card"
 
 export default function AuthPage() {
   const { toast } = useToast()
+  const router = useRouter() // Initialize useRouter
 
   const handleForgotPassword = () => {
     toast({

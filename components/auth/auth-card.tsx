@@ -4,15 +4,14 @@ import type React from "react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { X, Mail, Eye, EyeOff, Lock, Loader2 } from "lucide-react"
+import { X, Mail, Eye, EyeOff, Lock, Loader2, User } from "lucide-react"
 import { PasswordStrength } from "./password-strength"
 import { useToast } from "@/hooks/use-toast"
 import { loginUser, signupUser } from "@/lib/api"
+import { useRouter } from "next/navigation" // Import useRouter
 
 interface AuthCardProps {
-  // isLoading is now managed internally, but kept as prop if parent needs to override
-  // email, password, rememberMe are now managed internally
-  onForgotPassword: () => void; // This remains a prop as it's an external action
+  onForgotPassword: () => void;
 }
 
 export function AuthCard({
@@ -28,6 +27,7 @@ export function AuthCard({
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const { toast } = useToast();
+  const router = useRouter(); // Initialize useRouter
 
   const handleRedirect = () => {
     window.open("https://www.linkedin.com/in/167aliraza/", "_blank");
@@ -51,15 +51,7 @@ export function AuthCard({
       return;
     }
 
-    const result = await loginUser(email, password);
-    if (result) {
-      // Handle successful login, e.g., store token, redirect
-      console.log("Login successful:", result);
-      // Optionally clear form fields
-      setEmail("");
-      setPassword("");
-      setRememberMe(false);
-    }
+    await loginUser(email, password, router); // Pass router instance
     setIsLoading(false);
   };
 
@@ -109,18 +101,7 @@ export function AuthCard({
     }
 
     const fullName = `${firstName} ${lastName}`;
-    const result = await signupUser(fullName, email, password);
-    if (result) {
-      // Handle successful signup, e.g., store token, redirect, or switch to sign-in tab
-      console.log("Sign up successful:", result);
-      // Optionally clear form fields and switch to sign-in
-      setFirstName("");
-      setLastName("");
-      setEmail("");
-      setPassword("");
-      setConfirmPassword("");
-      setActiveTab("signin"); // Suggest switching to sign-in after successful registration
-    }
+    await signupUser(fullName, email, password, router); // Pass router instance
     setIsLoading(false);
   };
 
