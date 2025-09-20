@@ -53,7 +53,11 @@ export default function ChatPage() {
       );
 
       if (response) {
-        const aiResponseText = response.result;
+        // Ensure the response result is a string for display
+        const aiResponseText = typeof response.result === 'string'
+          ? response.result
+          : JSON.stringify(response.result, null, 2); // Fallback to stringifying if it's an object
+
         const newAiMessage: Message = {
           id: (Date.now() + 1).toString(),
           text: aiResponseText,

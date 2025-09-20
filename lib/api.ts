@@ -23,7 +23,7 @@ interface UserQuery {
 }
 
 interface ChatResponse {
-  result: any;
+  result: string; // Changed from 'any' to 'string'
   thread_id: string;
   user_id: string;
   is_new_thread: boolean;
