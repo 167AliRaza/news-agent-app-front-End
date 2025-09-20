@@ -201,7 +201,7 @@ export default function ChatPage() {
             </Button>
           </div>
 
-          <ScrollArea className="flex-1 pr-4 mb-4">
+          <ScrollArea className="flex-1 mb-4">
             <div className="flex flex-col">
               {isLoadingMessages ? (
                 <div className="flex flex-col items-center justify-center h-full text-white/50 text-lg">
