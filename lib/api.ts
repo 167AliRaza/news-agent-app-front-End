@@ -1,5 +1,6 @@
 import { toast } from "@/hooks/use-toast";
-import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime"; // Import type for router
+import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
+import { setAuthData, clearAuthData, getAuthToken } from "@/lib/auth-utils"; // Import auth utilities
 
 const BASE_URL = "https://167aliraza-news-agent.hf.space";
 
@@ -9,6 +10,10 @@ interface AuthResponse {
   expires_in: number;
   email: string;
   name: string;
+}
+
+interface LogoutResponse {
+  message: string;
 }
 
 // Helper function to extract a meaningful error message
@@ -47,11 +52,12 @@ export async function signupUser(name: string, email: string, password: string, 
     }
 
     const data: AuthResponse = await response.json();
+    setAuthData({ accessToken: data.access_token, email: data.email, name: data.name }); // Save auth data
     toast({
       title: "Sign Up Successful!",
       description: "Your account has been created. Redirecting to chat...",
     });
-    router.push("/chat"); // Redirect to chat page
+    router.push("/chat");
     return data;
   } catch (error) {
     console.error("Sign up API error:", error);
@@ -67,7 +73,7 @@ export async function signupUser(name: string, email: string, password: string, 
 export async function loginUser(email: string, password: string, router: AppRouterInstance): Promise<AuthResponse | null> {
   try {
     const formData = new URLSearchParams();
-    formData.append("username", email); // Backend expects 'username' for email
+    formData.append("username", email);
     formData.append("password", password);
 
     const response = await fetch(`${BASE_URL}/auth/login`, {
@@ -79,20 +85,22 @@ export async function loginUser(email: string, password: string, router: AppRout
     });
 
     if (!response.ok) {
+      const errorData = await response.json();
       toast({
         title: "Sign In Failed",
-        description: "Invalid email or password.",
+        description: getErrorMessage(errorData, "Invalid email or password."),
         variant: "destructive",
       });
       return null;
     }
 
     const data: AuthResponse = await response.json();
+    setAuthData({ accessToken: data.access_token, email: data.email, name: data.name }); // Save auth data
     toast({
       title: "Sign In Successful!",
       description: "Welcome back to your account. Redirecting to chat...",
     });
-    router.push("/chat"); // Redirect to chat page
+    router.push("/chat");
     return data;
   } catch (error) {
     console.error("Sign in API error:", error);
@@ -102,5 +110,57 @@ export async function loginUser(email: string, password: string, router: AppRout
       variant: "destructive",
     });
     return null;
+  }
+}
+
+export async function logoutUser(router: AppRouterInstance): Promise<boolean> {
+  const token = getAuthToken();
+  if (!token) {
+    console.warn("No token found for logout.");
+    clearAuthData(); // Ensure data is cleared even if no token was present
+    router.push("/");
+    return true;
+  }
+
+  try {
+    const response = await fetch(`${BASE_URL}/auth/logout`, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      toast({
+        title: "Logout Failed",
+        description: getErrorMessage(errorData, "An error occurred during logout."),
+        variant: "destructive",
+      });
+      // Even if API logout fails, clear client-side data for security
+      clearAuthData();
+      router.push("/");
+      return false;
+    }
+
+    const data: LogoutResponse = await response.json();
+    toast({
+      title: "Logged Out",
+      description: data.message || "You have been successfully logged out.",
+    });
+    clearAuthData(); // Clear auth data on successful logout
+    router.push("/");
+    return true;
+  } catch (error) {
+    console.error("Logout API error:", error);
+    toast({
+      title: "Network Error",
+      description: "Could not connect to the server for logout. Please try again.",
+      variant: "destructive",
+    });
+    clearAuthData(); // Clear auth data even on network error
+    router.push("/");
+    return false;
   }
 }

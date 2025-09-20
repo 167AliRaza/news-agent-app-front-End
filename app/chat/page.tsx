@@ -10,6 +10,8 @@ import { ChatMessage } from "@/components/chat/chat-message";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Toaster } from "@/components/ui/toaster";
 import { toast } from "@/hooks/use-toast";
+import { logoutUser } from "@/lib/api"; // Import logoutUser
+import { UserProfileDisplay } from "@/components/chat/user-profile-display"; // Import UserProfileDisplay
 
 interface Message {
   id: string;
@@ -60,12 +62,8 @@ export default function ChatPage() {
     }
   };
 
-  const handleLogout = () => {
-    toast({
-      title: "Logged Out",
-      description: "You have been successfully logged out.",
-    });
-    router.push("/");
+  const handleLogout = async () => {
+    await logoutUser(router); // Call the API logout function
   };
 
   return (
@@ -80,6 +78,9 @@ export default function ChatPage() {
     >
       <ChatLayout>
         <div className="flex flex-col h-full">
+          {/* User Profile Display */}
+          <UserProfileDisplay />
+
           <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-4">
             <h1 className="text-2xl font-normal text-white">New Chat</h1>
             <Button variant="ghost" className="text-white/70 hover:text-white hover:bg-white/10" onClick={handleLogout}>
