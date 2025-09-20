@@ -77,10 +77,11 @@ export async function loginUser(email: string, password: string): Promise<AuthRe
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
+      // For sign-in failures, we'll use the specific message "Invalid email or password"
+      // regardless of the backend's detailed error message, for security and simplicity.
       toast({
         title: "Sign In Failed",
-        description: getErrorMessage(errorData, "Invalid credentials. Please try again."),
+        description: "Invalid email or password.",
         variant: "destructive",
       });
       return null;
