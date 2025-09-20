@@ -280,6 +280,7 @@ export async function fetchUserThreads(): Promise<Thread[] | null> {
     }
 
     const data: ThreadsResponse = await response.json();
+    console.log("Fetched threads:", data.threads); // Log fetched threads
     return data.threads;
   } catch (error) {
     console.error("Fetch threads API error:", error);
@@ -293,6 +294,17 @@ export async function fetchUserThreads(): Promise<Thread[] | null> {
 }
 
 export async function fetchThreadMessages(threadId: string): Promise<ThreadMessage[] | null> {
+  // Client-side validation to prevent sending 'query' as a thread ID
+  if (threadId === "query") {
+    toast({
+      title: "Invalid Thread ID",
+      description: "Cannot retrieve messages for a thread with ID 'query'. This might indicate a backend issue returning an invalid thread ID.",
+      variant: "destructive",
+    });
+    console.error("Attempted to fetch messages for invalid thread ID: 'query'");
+    return null;
+  }
+
   const token = getAuthToken();
   if (!token) {
     toast({
