@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { SendHorizonalIcon, Loader2 } from "lucide-react";
+import { SendHorizonalIcon, Loader2, MessageSquareTextIcon } from "lucide-react"; // Added MessageSquareTextIcon
 import { ChatLayout } from "@/components/chat/chat-layout";
 import { ChatMessage } from "@/components/chat/chat-message";
 import { ScrollArea } from "@/components/ui/scroll-area";
