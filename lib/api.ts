@@ -110,13 +110,16 @@ export async function signupUser(name: string, email: string, password: string, 
 
 export async function loginUser(email: string, password: string, router: AppRouterInstance): Promise<AuthResponse | null> {
   try {
-    // Changed to send JSON body instead of form-urlencoded
+    const formBody = new URLSearchParams();
+    formBody.append("username", email); // FastAPI expects 'username' for email in form data
+    formBody.append("password", password);
+
     const response = await fetch(`${BASE_URL}/auth/login`, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json", // Changed content type
+        "Content-Type": "application/x-www-form-urlencoded",
       },
-      body: JSON.stringify({ email, password }), // Changed body to JSON
+      body: formBody.toString(),
     });
 
     if (!response.ok) {
