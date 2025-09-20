@@ -10,6 +10,21 @@ interface AuthResponse {
   name: string;
 }
 
+// Helper function to extract a meaningful error message
+function getErrorMessage(errorData: any, defaultMessage: string): string {
+  if (errorData && typeof errorData.detail === 'string' && errorData.detail.trim() !== '') {
+    return errorData.detail;
+  }
+  if (Array.isArray(errorData.detail) && errorData.detail.length > 0) {
+    // Assuming it's a Pydantic validation error format
+    return errorData.detail.map((err: any) => err.msg).join(', ');
+  }
+  if (errorData && typeof errorData.message === 'string' && errorData.message.trim() !== '') {
+    return errorData.message;
+  }
+  return defaultMessage;
+}
+
 export async function signupUser(name: string, email: string, password: string): Promise<AuthResponse | null> {
   try {
     const response = await fetch(`${BASE_URL}/auth/signup`, {
@@ -24,7 +39,7 @@ export async function signupUser(name: string, email: string, password: string):
       const errorData = await response.json();
       toast({
         title: "Sign Up Failed",
-        description: errorData.detail || "An unexpected error occurred during sign up.",
+        description: getErrorMessage(errorData, "An unexpected error occurred during sign up."),
         variant: "destructive",
       });
       return null;
@@ -65,7 +80,7 @@ export async function loginUser(email: string, password: string): Promise<AuthRe
       const errorData = await response.json();
       toast({
         title: "Sign In Failed",
-        description: errorData.detail || "Invalid credentials. Please try again.",
+        description: getErrorMessage(errorData, "Invalid credentials. Please try again."),
         variant: "destructive",
       });
       return null;
