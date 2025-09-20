@@ -3,10 +3,10 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { PlusIcon, MessageSquareTextIcon, PanelLeftClose, PanelLeftOpen, Loader2 } from "lucide-react";
-import { cn } from "@/lib/utils"; // Corrected from '=>' to 'from'
+import { PlusIcon, MessageSquareTextIcon, PanelLeftClose, PanelLeftOpen, Loader2, Trash2Icon } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { UserProfileDisplay } from "@/components/chat/user-profile-display";
-import { fetchUserThreads } from "@/lib/api"; // Import fetchUserThreads
+import { fetchUserThreads, deleteThread } from "@/lib/api"; // Import deleteThread
 
 interface ChatLayoutProps {
   children: React.ReactNode;
@@ -47,6 +47,19 @@ export function ChatLayout({ children, currentThreadId, setCurrentThreadId }: Ch
 
   const handleThreadClick = (threadId: string) => {
     setCurrentThreadId(threadId); // Set the clicked thread as current
+  };
+
+  const handleDeleteThread = async (threadId: string) => {
+    if (window.confirm("Are you sure you want to delete this thread? This action cannot be undone.")) {
+      const success = await deleteThread(threadId);
+      if (success) {
+        // If the deleted thread was the currently active one, clear it
+        if (currentThreadId === threadId) {
+          setCurrentThreadId(null);
+        }
+        loadThreads(); // Reload the threads list
+      }
+    }
   };
 
   return (
@@ -112,20 +125,35 @@ export function ChatLayout({ children, currentThreadId, setCurrentThreadId }: Ch
               !isSidebarCollapsed && <p className="text-white/50 text-sm text-center">No threads yet.</p>
             ) : (
               threads.map((thread) => (
-                <Button
-                  key={thread.thread_id}
-                  variant="ghost"
-                  className={cn(
-                    "w-full justify-start text-white/80 hover:text-white hover:bg-white/10 rounded-lg px-3 py-2 transition-colors duration-200",
-                    currentThreadId === thread.thread_id && "bg-white/10 text-white"
-                  )}
-                  onClick={() => handleThreadClick(thread.thread_id)}
-                >
-                  <MessageSquareTextIcon className={cn("w-4 h-4", !isSidebarCollapsed && "mr-2 text-white/60")} />
+                <div key={thread.thread_id} className="relative flex items-center group">
+                  <Button
+                    variant="ghost"
+                    className={cn(
+                      "w-full justify-start text-white/80 hover:text-white hover:bg-white/10 rounded-lg px-3 py-2 transition-colors duration-200",
+                      currentThreadId === thread.thread_id && "bg-white/10 text-white"
+                    )}
+                    onClick={() => handleThreadClick(thread.thread_id)}
+                  >
+                    <MessageSquareTextIcon className={cn("w-4 h-4", !isSidebarCollapsed && "mr-2 text-white/60")} />
+                    {!isSidebarCollapsed && (
+                      <span className="truncate">{thread.title || `Untitled Chat ${thread.thread_id.substring(0, 4)}`}</span>
+                    )}
+                  </Button>
                   {!isSidebarCollapsed && (
-                    <span className="truncate">{thread.title || `Untitled Chat ${thread.thread_id.substring(0, 4)}`}</span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-0 text-white/50 hover:text-red-400 hover:bg-white/10 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                      onClick={(e) => {
+                        e.stopPropagation(); // Prevent thread selection when deleting
+                        handleDeleteThread(thread.thread_id);
+                      }}
+                      aria-label="Delete thread"
+                    >
+                      <Trash2Icon className="w-4 h-4" />
+                    </Button>
                   )}
-                </Button>
+                </div>
               ))
             )}
           </div>

@@ -23,7 +23,7 @@ interface UserQuery {
 }
 
 interface ChatResponse {
-  result: string; // Changed from 'any' to 'string'
+  result: string;
   thread_id: string;
   user_id: string;
   is_new_thread: boolean;
@@ -36,6 +36,18 @@ interface Thread {
 
 interface ThreadsResponse {
   threads: Thread[];
+}
+
+interface ThreadMessage {
+  id: string;
+  text: string;
+  isUser: boolean;
+  timestamp: string; // Assuming a timestamp for ordering
+}
+
+interface ThreadMessagesResponse {
+  thread_id: string;
+  messages: ThreadMessage[];
 }
 
 // Helper function to extract a meaningful error message
@@ -246,7 +258,6 @@ export async function sendMessageToAgent(
 export async function fetchUserThreads(): Promise<Thread[] | null> {
   const token = getAuthToken();
   if (!token) {
-    // No token, no threads to fetch. This is expected if not logged in.
     return null;
   }
 
@@ -278,5 +289,98 @@ export async function fetchUserThreads(): Promise<Thread[] | null> {
       variant: "destructive",
     });
     return null;
+  }
+}
+
+export async function fetchThreadMessages(threadId: string): Promise<ThreadMessage[] | null> {
+  const token = getAuthToken();
+  if (!token) {
+    toast({
+      title: "Authentication Required",
+      description: "Please sign in to view thread messages.",
+      variant: "destructive",
+    });
+    return null;
+  }
+
+  try {
+    const response = await fetch(`${BASE_URL}/thread_messages/${threadId}`, {
+      method: "GET",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      toast({
+        title: "Fetch Messages Failed",
+        description: getErrorMessage(errorData, "Failed to load messages for this thread."),
+        variant: "destructive",
+      });
+      return null;
+    }
+
+    const data: ThreadMessagesResponse = await response.json();
+    // Assuming the API returns messages in chronological order, or we sort them.
+    // For now, let's assume they are ordered correctly.
+    return data.messages.map(msg => ({
+      ...msg,
+      isUser: msg.isUser, // Ensure isUser is correctly mapped
+      text: typeof msg.text === 'string' ? msg.text : JSON.stringify(msg.text, null, 2)
+    }));
+  } catch (error) {
+    console.error("Fetch thread messages API error:", error);
+    toast({
+      title: "Network Error",
+      description: "Could not connect to the server to fetch thread messages.",
+      variant: "destructive",
+    });
+    return null;
+  }
+}
+
+export async function deleteThread(threadId: string): Promise<boolean> {
+  const token = getAuthToken();
+  if (!token) {
+    toast({
+      title: "Authentication Required",
+      description: "Please sign in to delete threads.",
+      variant: "destructive",
+    });
+    return false;
+  }
+
+  try {
+    const response = await fetch(`${BASE_URL}/delete_thread/${threadId}`, {
+      method: "DELETE",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      toast({
+        title: "Delete Thread Failed",
+        description: getErrorMessage(errorData, "Failed to delete the thread."),
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    toast({
+      title: "Thread Deleted",
+      description: "The chat thread has been successfully deleted.",
+    });
+    return true;
+  } catch (error) {
+    console.error("Delete thread API error:", error);
+    toast({
+      title: "Network Error",
+      description: "Could not connect to the server to delete the thread.",
+      variant: "destructive",
+    });
+    return false;
   }
 }

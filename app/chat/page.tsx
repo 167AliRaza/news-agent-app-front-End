@@ -10,7 +10,7 @@ import { ChatMessage } from "@/components/chat/chat-message";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Toaster } from "@/components/ui/toaster";
 import { toast } from "@/hooks/use-toast";
-import { logoutUser, sendMessageToAgent } from "@/lib/api"; // Import sendMessageToAgent
+import { logoutUser, sendMessageToAgent, fetchThreadMessages } from "@/lib/api"; // Import fetchThreadMessages
 
 interface Message {
   id: string;
@@ -22,12 +22,33 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false); // New loading state for messages
   const [currentThreadId, setCurrentThreadId] = useState<string | null>(null); // State for current thread ID
   const router = useRouter();
 
-  // Effect to clear messages when currentThreadId changes (i.e., switching threads)
+  // Effect to fetch messages when currentThreadId changes
   useEffect(() => {
-    setMessages([]);
+    const loadThreadConversation = async () => {
+      if (currentThreadId) {
+        setIsLoadingMessages(true);
+        setMessages([]); // Clear messages before loading new ones
+        const fetchedMessages = await fetchThreadMessages(currentThreadId);
+        if (fetchedMessages) {
+          // Map fetched messages to the local Message interface
+          const formattedMessages: Message[] = fetchedMessages.map(msg => ({
+            id: msg.id,
+            text: msg.text,
+            isUser: msg.isUser,
+          }));
+          setMessages(formattedMessages);
+        }
+        setIsLoadingMessages(false);
+      } else {
+        setMessages([]); // Clear messages if no thread is selected (new chat)
+      }
+    };
+
+    loadThreadConversation();
   }, [currentThreadId]);
 
   const handleSendMessage = async (e: React.FormEvent) => {
@@ -53,10 +74,9 @@ export default function ChatPage() {
       );
 
       if (response) {
-        // Ensure the response result is a string for display
         const aiResponseText = typeof response.result === 'string'
           ? response.result
-          : JSON.stringify(response.result, null, 2); // Fallback to stringifying if it's an object
+          : JSON.stringify(response.result, null, 2);
 
         const newAiMessage: Message = {
           id: (Date.now() + 1).toString(),
@@ -65,7 +85,6 @@ export default function ChatPage() {
         };
         setMessages((prevMessages) => [...prevMessages, newAiMessage]);
 
-        // Update currentThreadId if a new thread was created or if it's the first message
         if (response.is_new_thread || !currentThreadId) {
           setCurrentThreadId(response.thread_id);
         }
@@ -83,7 +102,7 @@ export default function ChatPage() {
   };
 
   const handleLogout = async () => {
-    await logoutUser(router); // Call the API logout function
+    await logoutUser(router);
   };
 
   return (
@@ -112,15 +131,21 @@ export default function ChatPage() {
 
           <ScrollArea className="flex-1 pr-4 mb-4">
             <div className="flex flex-col">
-              {messages.length === 0 && (
+              {isLoadingMessages ? (
+                <div className="flex flex-col items-center justify-center h-full text-white/50 text-lg">
+                  <Loader2 className="w-8 h-8 animate-spin mb-4" />
+                  <p>Loading messages...</p>
+                </div>
+              ) : messages.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-white/50 text-lg">
                   <MessageSquareTextIcon className="w-12 h-12 mb-4" />
                   <p>Start a conversation...</p>
                 </div>
+              ) : (
+                messages.map((msg) => (
+                  <ChatMessage key={msg.id} message={msg.text} isUser={msg.isUser} />
+                ))
               )}
-              {messages.map((msg) => (
-                <ChatMessage key={msg.id} message={msg.text} isUser={msg.isUser} />
-              ))}
             </div>
           </ScrollArea>
 
@@ -131,12 +156,12 @@ export default function ChatPage() {
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
               className="flex-1 bg-black/20 border-white/10 text-white placeholder:text-white/40 focus:border-white/30 focus:ring-0 rounded-2xl h-12 text-base transition-all duration-200 hover:bg-black/30 focus:bg-black/30"
-              disabled={isSending}
+              disabled={isSending || isLoadingMessages}
             />
             <Button
               type="submit"
               className="bg-[#007aff] hover:bg-[#0056cc] text-white rounded-2xl h-12 w-12 flex items-center justify-center transition-all duration-200 transform hover:scale-105 active:scale-95"
-              disabled={isSending || inputMessage.trim() === ""}
+              disabled={isSending || inputMessage.trim() === "" || isLoadingMessages}
             >
               {isSending ? (
                 <Loader2 className="h-5 w-5 animate-spin" />
