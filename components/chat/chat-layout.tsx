@@ -127,7 +127,7 @@ export function ChatLayout({
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="absolute right-2 top-1/2 -translate-y-1/2 text-white/40 hover:text-red-400 hover:bg-red-500/20 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110 z-10"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-white/40 hover:text-red-400 hover:bg-red-500/20 rounded-full transition-all duration-200 hover:scale-110 z-10"
                       onClick={(e) => {
                         e.stopPropagation(); // Prevent thread selection when deleting
                         onDeleteThread(thread.thread_id);
