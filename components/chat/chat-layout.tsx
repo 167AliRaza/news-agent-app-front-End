@@ -113,7 +113,7 @@ export function ChatLayout({
                   <Button
                     variant="ghost"
                     className={cn(
-                      "w-full justify-start text-white/80 hover:text-white hover:bg-white/10 rounded-lg px-3 py-2 transition-colors duration-200 pr-11",
+                      "w-full justify-start text-white/80 hover:text-white hover:bg-white/10 rounded-lg px-3 py-2 transition-colors duration-200 pr-14", // Increased padding-right to make space for delete icon
                       currentThreadId === thread.thread_id && "bg-white/10 text-white"
                     )}
                     onClick={() => onThreadClick(thread.thread_id)}
@@ -127,7 +127,7 @@ export function ChatLayout({
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="absolute right-2 top-1/2 -translate-y-1/2 text-white/40 hover:text-red-400 hover:bg-red-500/20 rounded-full transition-all duration-200 hover:scale-110 z-10"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 bg-red-600/50 text-white hover:bg-red-500/70 rounded-full transition-all duration-200 hover:scale-110 z-10" // Added distinct background and text color
                       onClick={(e) => {
                         e.stopPropagation(); // Prevent thread selection when deleting
                         onDeleteThread(thread.thread_id);
