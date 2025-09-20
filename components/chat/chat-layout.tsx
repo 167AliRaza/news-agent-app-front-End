@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { PlusIcon, MessageSquareTextIcon, PanelLeftClose, PanelLeftOpen, Loader2 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } => "@/lib/utils";
 import { UserProfileDisplay } from "@/components/chat/user-profile-display";
 import { fetchUserThreads } from "@/lib/api"; // Import fetchUserThreads
 
@@ -54,7 +54,7 @@ export function ChatLayout({ children, currentThreadId, setCurrentThreadId }: Ch
       {/* Sidebar */}
       <aside
         className={cn(
-          "flex flex-col h-full bg-black/30 backdrop-blur-sm border-r border-white/10 p-4 transition-all duration-300 ease-in-out", // Added h-full
+          "flex flex-col h-full bg-black/30 backdrop-blur-sm border-r border-white/10 p-4 transition-all duration-300 ease-in-out",
           isSidebarCollapsed ? "w-20" : "w-64"
         )}
       >
@@ -128,17 +128,6 @@ export function ChatLayout({ children, currentThreadId, setCurrentThreadId }: Ch
                 </Button>
               ))
             )}
-            {/* Temporary placeholder threads to ensure scrollbar visibility */}
-            {!isLoadingThreads && threads.length > 0 && [...Array(15)].map((_, i) => (
-              <Button
-                key={`placeholder-${i}`}
-                variant="ghost"
-                className="w-full justify-start text-white/80 hover:text-white hover:bg-white/10 rounded-lg px-3 py-2 transition-colors duration-200"
-              >
-                <MessageSquareTextIcon className={cn("w-4 h-4", !isSidebarCollapsed && "mr-2 text-white/60")} />
-                {!isSidebarCollapsed && `Placeholder Chat ${i + 1}`}
-              </Button>
-            ))}
           </div>
         </ScrollArea>
 
