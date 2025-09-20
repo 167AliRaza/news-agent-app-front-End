@@ -7,84 +7,118 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Eye, EyeOff, Mail, Lock, User } from "lucide-react"
+import { PasswordStrength } from "./password-strength" // Import PasswordStrength
 
 interface SignUpFormProps {
-  onSubmit: (e: React.FormEvent) => void
+  onSubmit: (fullName: string, email: string, password: string, confirmPassword: string) => void
   isLoading: boolean
+  email: string
+  setEmail: (email: string) => void
   password: string
   setPassword: (password: string) => void
 }
 
-export function SignUpForm({ onSubmit, isLoading, password, setPassword }: SignUpFormProps) {
+export function SignUpForm({ onSubmit, isLoading, email, setEmail, password, setPassword }: SignUpFormProps) {
   const [showPassword, setShowPassword] = useState(false)
+  const [firstName, setFirstName] = useState("")
+  const [lastName, setLastName] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    const fullName = `${firstName} ${lastName}`.trim()
+    onSubmit(fullName, email, password, confirmPassword)
+  }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-6">
-      <div className="space-y-3">
-        <Label htmlFor="name" className="text-white font-medium flex items-center gap-2 text-base font-sans">
-          <User className="w-4 h-4 text-[#8e8e93]" />
-          Full Name
-        </Label>
-        <Input
-          id="name"
-          type="text"
-          placeholder="Enter your full name"
-          required
-          className="bg-[#2c2c2e] border border-[#3a3a3c] text-white placeholder:text-[#8e8e93] focus:border-[#007aff] focus:ring-2 focus:ring-[#007aff]/20 transition-all duration-200 rounded-2xl h-14 text-base font-sans"
-        />
-      </div>
-      <div className="space-y-3">
-        <Label htmlFor="signup-email" className="text-white font-medium flex items-center gap-2 text-base font-sans">
-          <Mail className="w-4 h-4 text-[#8e8e93]" />
-          Email
-        </Label>
-        <Input
-          id="signup-email"
-          type="email"
-          placeholder="Enter your email"
-          required
-          className="bg-[#2c2c2e] border border-[#3a3a3c] text-white placeholder:text-[#8e8e93] focus:border-[#007aff] focus:ring-2 focus:ring-[#007aff]/20 transition-all duration-200 rounded-2xl h-14 text-base font-sans"
-        />
-      </div>
-      <div className="space-y-3">
-        <Label htmlFor="signup-password" className="text-white font-medium flex items-center gap-2 text-base font-sans">
-          <Lock className="w-4 h-4 text-[#8e8e93]" />
-          Password
-        </Label>
+    <form onSubmit={handleSubmit} className="space-y-4">
+      {/* Name fields */}
+      <div className="grid grid-cols-2 gap-4">
         <div className="relative">
           <Input
-            id="signup-password"
-            type={showPassword ? "text" : "password"}
-            placeholder="Create a password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            type="text"
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
+            className="bg-black/20 backdrop-blur-sm border border-white/10 rounded-2xl h-14 text-white placeholder:text-white/40 focus:border-white/30 focus:ring-0 text-base transition-all duration-200 hover:bg-black/30 focus:bg-black/30"
+            placeholder="First name"
             required
-            className="bg-[#2c2c2e] border border-[#3a3a3c] text-white placeholder:text-[#8e8e93] focus:border-[#007aff] focus:ring-2 focus:ring-[#007aff]/20 transition-all duration-200 rounded-2xl h-14 pr-14 text-base font-sans"
           />
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="absolute right-0 top-0 h-full px-4 text-[#8e8e93] hover:text-white hover:bg-transparent"
-            onClick={() => setShowPassword(!showPassword)}
-          >
-            {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-          </Button>
+        </div>
+        <div className="relative">
+          <Input
+            type="text"
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
+            className="bg-black/20 backdrop-blur-sm border border-white/10 rounded-2xl h-14 text-white placeholder:text-white/40 focus:border-white/30 focus:ring-0 text-base transition-all duration-200 hover:bg-black/30 focus:bg-black/30"
+            placeholder="Last name"
+            required
+          />
         </div>
       </div>
 
+      {/* Email field */}
+      <div className="relative">
+        <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white/40 transition-colors duration-200" />
+        <Input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="bg-black/20 backdrop-blur-sm border border-white/10 rounded-2xl h-14 text-white placeholder:text-white/40 focus:border-white/30 focus:ring-0 pl-12 text-base transition-all duration-200 hover:bg-black/30 focus:bg-black/30"
+          placeholder="Enter your email"
+          required
+        />
+      </div>
+
+      {/* Password field */}
+      <div className="relative">
+        <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white/40 transition-colors duration-200" />
+        <Input
+          type={showPassword ? "text" : "password"}
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="bg-black/20 backdrop-blur-sm border border-white/10 rounded-2xl h-14 text-white placeholder:text-white/40 focus:border-white/30 focus:ring-0 pl-12 pr-12 text-base transition-all duration-200 hover:bg-black/30 focus:bg-black/30"
+          placeholder="Create a password"
+          required
+        />
+        <button
+          type="button"
+          onClick={() => setShowPassword(!showPassword)}
+          className="absolute right-4 top-1/2 transform -translate-y-1/2 text-white/40 hover:text-white/60 transition-colors duration-200"
+        >
+          {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+        </button>
+      </div>
+      <PasswordStrength password={password} />
+
+      {/* Confirm Password field */}
+      <div className="relative">
+        <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white/40 transition-colors duration-200" />
+        <Input
+          type="password"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          className="bg-black/20 backdrop-blur-sm border border-white/10 rounded-2xl h-14 text-white placeholder:text-white/40 focus:border-white/30 focus:ring-0 pl-12 text-base transition-all duration-200 hover:bg-black/30 focus:bg-black/30"
+          placeholder="Confirm password"
+          required
+        />
+      </div>
+      {confirmPassword && password !== confirmPassword && (
+        <p className="text-xs text-red-400">Passwords do not match</p>
+      )}
+
+      {/* Create account button */}
       <Button
         type="submit"
-        className="w-full bg-[#007aff] hover:bg-[#0056cc] text-white font-medium transition-all duration-200 transform hover:scale-[1.01] shadow-lg rounded-2xl h-14 mt-8 text-base font-sans"
-        disabled={isLoading}
+        className="w-full bg-white/20 backdrop-blur-sm border border-white/20 hover:bg-white/30 text-white font-medium rounded-2xl h-14 mt-8 text-base transition-all duration-300 transform hover:scale-[1.02] hover:shadow-lg active:scale-[0.98]"
+        disabled={isLoading || password !== confirmPassword || !firstName || !lastName || !email || !password || !confirmPassword}
       >
         {isLoading ? (
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             Creating account...
-          </div>
+          </>
         ) : (
-          "Create Account"
+          "Create an account"
         )}
       </Button>
     </form>
