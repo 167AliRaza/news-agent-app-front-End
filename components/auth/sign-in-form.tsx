@@ -78,7 +78,7 @@ export function SignInForm({
             id="remember"
             checked={rememberMe}
             onCheckedChange={setRememberMe}
-            className="border-[#3a3a3c] data-[state=checked]:bg-[#007aff] data-[state=checked]:border-[#007aff] rounded-lg"
+            className="border-white/40 data-[state=checked]:bg-[#007aff] data-[state=checked]:border-[#007aff]"
           />
           <Label htmlFor="remember" className="text-base text-[#8e8e93] font-medium font-sans">
             Remember me
