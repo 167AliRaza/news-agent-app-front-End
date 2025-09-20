@@ -190,9 +190,12 @@ export default function ChatPage() {
       >
         <div className="flex flex-col h-full">
           <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-4">
-            <h1 className="text-2xl font-normal text-white">
-              {currentThreadId ? `Thread: ${currentThreadId.substring(0, 8)}...` : "New Chat"}
-            </h1>
+            <div>
+              <h1 className="text-2xl font-normal text-white">Welcome to News Agent</h1>
+              <p className="text-sm text-white/60">
+                Ask me about the latest news and I'll help you stay informed!
+              </p>
+            </div>
             <Button variant="ghost" className="text-white/70 hover:text-white hover:bg-white/10" onClick={handleLogout}>
               Logout
             </Button>

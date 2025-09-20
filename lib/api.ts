@@ -40,14 +40,18 @@ interface ThreadsResponse {
 
 interface ThreadMessage {
   id: string;
-  text: string;
-  isUser: boolean;
-  timestamp: string; // Assuming a timestamp for ordering
+  type: string;
+  content: string;
+}
+
+interface ThreadMessagesData {
+  all_messages: ThreadMessage[];
+  message_count: number;
 }
 
 interface ThreadMessagesResponse {
   thread_id: string;
-  messages: ThreadMessage[];
+  messages: ThreadMessagesData;
 }
 
 // Helper function to extract a meaningful error message
@@ -293,7 +297,14 @@ export async function fetchUserThreads(): Promise<Thread[] | null> {
   }
 }
 
-export async function fetchThreadMessages(threadId: string): Promise<ThreadMessage[] | null> {
+interface ProcessedThreadMessage {
+  id: string;
+  text: string;
+  isUser: boolean;
+  timestamp: string;
+}
+
+export async function fetchThreadMessages(threadId: string): Promise<ProcessedThreadMessage[] | null> {
   // Client-side validation to prevent sending 'query' as a thread ID
   if (threadId === "query") {
     toast({
@@ -335,13 +346,15 @@ export async function fetchThreadMessages(threadId: string): Promise<ThreadMessa
 
     const data: ThreadMessagesResponse = await response.json();
     
-    // Process messages to handle structured text content
-    return data.messages.map(msg => {
-      let formattedText = msg.text;
+    // Process messages from the nested structure
+    return data.messages.all_messages.map(msg => {
+      let formattedText = msg.content;
+      const isUser = msg.type === "HumanMessage";
+      
       try {
-        const parsedText = JSON.parse(msg.text);
+        const parsedText = JSON.parse(msg.content);
         if (typeof parsedText === 'object' && parsedText !== null && 'query' in parsedText && 'search_results' in parsedText) {
-          if (msg.isUser) {
+          if (isUser) {
             formattedText = parsedText.query || "User query (details in console)";
           } else {
             // Agent's response
@@ -354,13 +367,14 @@ export async function fetchThreadMessages(threadId: string): Promise<ThreadMessa
           }
         }
       } catch (e) {
-        // If parsing fails, it's a plain string, so use original msg.text
+        // If parsing fails, it's a plain string, so use original msg.content
       }
 
       return {
-        ...msg,
-        isUser: msg.isUser,
+        id: msg.id,
         text: formattedText,
+        isUser: isUser,
+        timestamp: new Date().toISOString(), // Add timestamp for compatibility
       };
     });
   } catch (error) {
