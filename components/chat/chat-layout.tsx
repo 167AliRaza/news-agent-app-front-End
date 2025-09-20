@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { PlusIcon, MessageSquareTextIcon, PanelLeftClose, PanelLeftOpen, Loader2 } from "lucide-react";
-import { cn } => "@/lib/utils";
+import { cn } from "@/lib/utils"; // Corrected from '=>' to 'from'
 import { UserProfileDisplay } from "@/components/chat/user-profile-display";
 import { fetchUserThreads } from "@/lib/api"; // Import fetchUserThreads
 
