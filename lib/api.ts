@@ -16,6 +16,28 @@ interface LogoutResponse {
   message: string;
 }
 
+interface UserQuery {
+  query: string;
+  thread_id?: string | null;
+  create_new_thread?: boolean;
+}
+
+interface ChatResponse {
+  result: any;
+  thread_id: string;
+  user_id: string;
+  is_new_thread: boolean;
+}
+
+interface Thread {
+  thread_id: string;
+  title: string;
+}
+
+interface ThreadsResponse {
+  threads: Thread[];
+}
+
 // Helper function to extract a meaningful error message
 function getErrorMessage(errorData: any, defaultMessage: string): string {
   if (errorData && typeof errorData.detail === 'string' && errorData.detail.trim() !== '') {
@@ -162,5 +184,99 @@ export async function logoutUser(router: AppRouterInstance): Promise<boolean> {
     clearAuthData(); // Clear auth data even on network error
     router.push("/");
     return false;
+  }
+}
+
+export async function sendMessageToAgent(
+  query: string,
+  threadId: string | null,
+  createNewThread: boolean
+): Promise<ChatResponse | null> {
+  const token = getAuthToken();
+  if (!token) {
+    toast({
+      title: "Authentication Required",
+      description: "Please sign in to send messages.",
+      variant: "destructive",
+    });
+    return null;
+  }
+
+  try {
+    const userQuery: UserQuery = { query };
+    if (threadId) {
+      userQuery.thread_id = threadId;
+    }
+    if (createNewThread) {
+      userQuery.create_new_thread = true;
+    }
+
+    const response = await fetch(`${BASE_URL}/chat`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
+      body: JSON.stringify(userQuery),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      toast({
+        title: "Chat Error",
+        description: getErrorMessage(errorData, "Failed to get a response from the agent."),
+        variant: "destructive",
+      });
+      return null;
+    }
+
+    const data: ChatResponse = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Send message API error:", error);
+    toast({
+      title: "Network Error",
+      description: "Could not connect to the server. Please try again.",
+      variant: "destructive",
+    });
+    return null;
+  }
+}
+
+export async function fetchUserThreads(): Promise<Thread[] | null> {
+  const token = getAuthToken();
+  if (!token) {
+    // No token, no threads to fetch. This is expected if not logged in.
+    return null;
+  }
+
+  try {
+    const response = await fetch(`${BASE_URL}/threads`, {
+      method: "GET",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      toast({
+        title: "Fetch Threads Failed",
+        description: getErrorMessage(errorData, "Failed to load your chat threads."),
+        variant: "destructive",
+      });
+      return null;
+    }
+
+    const data: ThreadsResponse = await response.json();
+    return data.threads;
+  } catch (error) {
+    console.error("Fetch threads API error:", error);
+    toast({
+      title: "Network Error",
+      description: "Could not connect to the server to fetch threads.",
+      variant: "destructive",
+    });
+    return null;
   }
 }

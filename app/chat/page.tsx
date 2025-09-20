@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +10,7 @@ import { ChatMessage } from "@/components/chat/chat-message";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Toaster } from "@/components/ui/toaster";
 import { toast } from "@/hooks/use-toast";
-import { logoutUser } from "@/lib/api"; // Import logoutUser
+import { logoutUser, sendMessageToAgent } from "@/lib/api"; // Import sendMessageToAgent
 
 interface Message {
   id: string;
@@ -22,15 +22,22 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const [currentThreadId, setCurrentThreadId] = useState<string | null>(null); // State for current thread ID
   const router = useRouter();
+
+  // Effect to clear messages when currentThreadId changes (i.e., switching threads)
+  useEffect(() => {
+    setMessages([]);
+  }, [currentThreadId]);
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (inputMessage.trim() === "") return;
 
+    const userQueryText = inputMessage;
     const newUserMessage: Message = {
       id: Date.now().toString(),
-      text: inputMessage,
+      text: userQueryText,
       isUser: true,
     };
 
@@ -38,17 +45,27 @@ export default function ChatPage() {
     setInputMessage("");
     setIsSending(true);
 
-    // Simulate API call for AI response
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      const response = await sendMessageToAgent(
+        userQueryText,
+        currentThreadId,
+        !currentThreadId // create_new_thread if no currentThreadId
+      );
 
-      const aiResponseText = `AI response to: "${newUserMessage.text}"`;
-      const newAiMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        text: aiResponseText,
-        isUser: false,
-      };
-      setMessages((prevMessages) => [...prevMessages, newAiMessage]);
+      if (response) {
+        const aiResponseText = response.result;
+        const newAiMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          text: aiResponseText,
+          isUser: false,
+        };
+        setMessages((prevMessages) => [...prevMessages, newAiMessage]);
+
+        // Update currentThreadId if a new thread was created or if it's the first message
+        if (response.is_new_thread || !currentThreadId) {
+          setCurrentThreadId(response.thread_id);
+        }
+      }
     } catch (error) {
       console.error("Error sending message to AI:", error);
       toast({
@@ -75,10 +92,15 @@ export default function ChatPage() {
         backgroundRepeat: "no-repeat",
       }}
     >
-      <ChatLayout>
+      <ChatLayout
+        currentThreadId={currentThreadId}
+        setCurrentThreadId={setCurrentThreadId}
+      >
         <div className="flex flex-col h-full">
           <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-4">
-            <h1 className="text-2xl font-normal text-white">New Chat</h1>
+            <h1 className="text-2xl font-normal text-white">
+              {currentThreadId ? `Thread: ${currentThreadId.substring(0, 8)}...` : "New Chat"}
+            </h1>
             <Button variant="ghost" className="text-white/70 hover:text-white hover:bg-white/10" onClick={handleLogout}>
               Logout
             </Button>

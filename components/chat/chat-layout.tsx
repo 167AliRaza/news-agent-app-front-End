@@ -1,21 +1,52 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { PlusIcon, MessageSquareTextIcon, PanelLeftClose, PanelLeftOpen } from "lucide-react"; // Added PanelLeftClose, PanelLeftOpen
+import { PlusIcon, MessageSquareTextIcon, PanelLeftClose, PanelLeftOpen, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { UserProfileDisplay } from "@/components/chat/user-profile-display"; // Import UserProfileDisplay
+import { UserProfileDisplay } from "@/components/chat/user-profile-display";
+import { fetchUserThreads } from "@/lib/api"; // Import fetchUserThreads
 
 interface ChatLayoutProps {
   children: React.ReactNode;
+  currentThreadId: string | null;
+  setCurrentThreadId: (threadId: string | null) => void;
 }
 
-export function ChatLayout({ children }: ChatLayoutProps) {
+interface Thread {
+  thread_id: string;
+  title: string;
+}
+
+export function ChatLayout({ children, currentThreadId, setCurrentThreadId }: ChatLayoutProps) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [threads, setThreads] = useState<Thread[]>([]);
+  const [isLoadingThreads, setIsLoadingThreads] = useState(true);
 
   const toggleSidebar = () => {
     setIsSidebarCollapsed(!isSidebarCollapsed);
+  };
+
+  const loadThreads = async () => {
+    setIsLoadingThreads(true);
+    const fetchedThreads = await fetchUserThreads();
+    if (fetchedThreads) {
+      setThreads(fetchedThreads);
+    }
+    setIsLoadingThreads(false);
+  };
+
+  useEffect(() => {
+    loadThreads();
+  }, [currentThreadId]); // Reload threads when a new thread is created/selected
+
+  const handleNewChat = () => {
+    setCurrentThreadId(null); // Reset current thread to start a new one
+  };
+
+  const handleThreadClick = (threadId: string) => {
+    setCurrentThreadId(threadId); // Set the clicked thread as current
   };
 
   return (
@@ -46,29 +77,57 @@ export function ChatLayout({ children }: ChatLayoutProps) {
           </Button>
         </div>
 
+        {/* New Chat Button */}
+        <div className="mb-4">
+          {!isSidebarCollapsed && (
+            <Button
+              variant="ghost"
+              className="w-full justify-start text-white/80 hover:text-white hover:bg-white/10 rounded-lg px-3 py-2 transition-colors duration-200"
+              onClick={handleNewChat}
+            >
+              <PlusIcon className="w-4 h-4 mr-2 text-white/60" />
+              New Chat
+            </Button>
+          )}
+          {isSidebarCollapsed && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="w-full justify-center text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors duration-200"
+              onClick={handleNewChat}
+            >
+              <PlusIcon className="w-5 h-5 text-white/60" />
+            </Button>
+          )}
+        </div>
+
         {/* Chat Threads Section */}
         <ScrollArea className="flex-1 pr-2 mb-4">
           <div className="space-y-2">
-            {!isSidebarCollapsed && (
-              <Button
-                variant="ghost"
-                className="w-full justify-start text-white/80 hover:text-white hover:bg-white/10 rounded-lg px-3 py-2 transition-colors duration-200"
-              >
-                <PlusIcon className="w-4 h-4 mr-2 text-white/60" />
-                New Chat
-              </Button>
+            {isLoadingThreads ? (
+              <div className="flex justify-center py-4">
+                <Loader2 className="w-6 h-6 animate-spin text-white/50" />
+              </div>
+            ) : threads.length === 0 ? (
+              !isSidebarCollapsed && <p className="text-white/50 text-sm text-center">No threads yet.</p>
+            ) : (
+              threads.map((thread) => (
+                <Button
+                  key={thread.thread_id}
+                  variant="ghost"
+                  className={cn(
+                    "w-full justify-start text-white/80 hover:text-white hover:bg-white/10 rounded-lg px-3 py-2 transition-colors duration-200",
+                    currentThreadId === thread.thread_id && "bg-white/10 text-white"
+                  )}
+                  onClick={() => handleThreadClick(thread.thread_id)}
+                >
+                  <MessageSquareTextIcon className={cn("w-4 h-4", !isSidebarCollapsed && "mr-2 text-white/60")} />
+                  {!isSidebarCollapsed && (
+                    <span className="truncate">{thread.title || `Untitled Chat ${thread.thread_id.substring(0, 4)}`}</span>
+                  )}
+                </Button>
+              ))
             )}
-            {/* Placeholder for chat history */}
-            {[...Array(5)].map((_, i) => (
-              <Button
-                key={i}
-                variant="ghost"
-                className="w-full justify-start text-white/80 hover:text-white hover:bg-white/10 rounded-lg px-3 py-2 transition-colors duration-200"
-              >
-                <MessageSquareTextIcon className={cn("w-4 h-4", !isSidebarCollapsed && "mr-2 text-white/60")} />
-                {!isSidebarCollapsed && `Chat ${i + 1}`}
-              </Button>
-            ))}
           </div>
         </ScrollArea>
 
