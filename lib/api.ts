@@ -409,12 +409,12 @@ export async function deleteThread(threadId: string): Promise<boolean> {
     });
     return true;
   } catch (error) {
-    console.error("Delete thread API error:", error);
-    toast({
-      title: "Network Error",
-      description: "Could not connect to the server to delete the thread.",
-      variant: "destructive",
-    });
-    return false;
+      console.error("Delete thread API error:", error);
+      toast({
+        title: "Network Error",
+        description: "Could not connect to the server to delete the thread.",
+        variant: "destructive",
+      });
+      return false;
   }
 }
