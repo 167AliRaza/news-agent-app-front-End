@@ -1,65 +1,40 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { PlusIcon, MessageSquareTextIcon, PanelLeftClose, PanelLeftOpen, Loader2, Trash2Icon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { UserProfileDisplay } from "@/components/chat/user-profile-display";
-import { fetchUserThreads, deleteThread } from "@/lib/api"; // Import deleteThread
-
-interface ChatLayoutProps {
-  children: React.ReactNode;
-  currentThreadId: string | null;
-  setCurrentThreadId: (threadId: string | null) => void;
-}
 
 interface Thread {
   thread_id: string;
   title: string;
 }
 
-export function ChatLayout({ children, currentThreadId, setCurrentThreadId }: ChatLayoutProps) {
+interface ChatLayoutProps {
+  children: React.ReactNode;
+  currentThreadId: string | null;
+  threads: Thread[];
+  isLoadingThreads: boolean;
+  onNewChat: () => void;
+  onThreadClick: (threadId: string) => void;
+  onDeleteThread: (threadId: string) => void;
+}
+
+export function ChatLayout({ 
+  children, 
+  currentThreadId, 
+  threads, 
+  isLoadingThreads,
+  onNewChat,
+  onThreadClick,
+  onDeleteThread
+}: ChatLayoutProps) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [threads, setThreads] = useState<Thread[]>([]);
-  const [isLoadingThreads, setIsLoadingThreads] = useState(true);
 
   const toggleSidebar = () => {
     setIsSidebarCollapsed(!isSidebarCollapsed);
-  };
-
-  const loadThreads = async () => {
-    setIsLoadingThreads(true);
-    const fetchedThreads = await fetchUserThreads();
-    if (fetchedThreads) {
-      setThreads(fetchedThreads);
-    }
-    setIsLoadingThreads(false);
-  };
-
-  useEffect(() => {
-    loadThreads();
-  }, [currentThreadId]); // Reload threads when a new thread is created/selected
-
-  const handleNewChat = () => {
-    setCurrentThreadId(null); // Reset current thread to start a new one
-  };
-
-  const handleThreadClick = (threadId: string) => {
-    setCurrentThreadId(threadId); // Set the clicked thread as current
-  };
-
-  const handleDeleteThread = async (threadId: string) => {
-    if (window.confirm("Are you sure you want to delete this thread? This action cannot be undone.")) {
-      const success = await deleteThread(threadId);
-      if (success) {
-        // If the deleted thread was the currently active one, clear it
-        if (currentThreadId === threadId) {
-          setCurrentThreadId(null);
-        }
-        loadThreads(); // Reload the threads list
-      }
-    }
   };
 
   return (
@@ -96,7 +71,7 @@ export function ChatLayout({ children, currentThreadId, setCurrentThreadId }: Ch
             <Button
               variant="ghost"
               className="w-full justify-start text-white/80 hover:text-white hover:bg-white/10 rounded-lg px-3 py-2 transition-colors duration-200"
-              onClick={handleNewChat}
+              onClick={onNewChat}
             >
               <PlusIcon className="w-4 h-4 mr-2 text-white/60" />
               New Chat
@@ -107,7 +82,7 @@ export function ChatLayout({ children, currentThreadId, setCurrentThreadId }: Ch
               variant="ghost"
               size="icon"
               className="w-full justify-center text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors duration-200"
-              onClick={handleNewChat}
+              onClick={onNewChat}
             >
               <PlusIcon className="w-5 h-5 text-white/60" />
             </Button>
@@ -132,7 +107,7 @@ export function ChatLayout({ children, currentThreadId, setCurrentThreadId }: Ch
                       "w-full justify-start text-white/80 hover:text-white hover:bg-white/10 rounded-lg px-3 py-2 transition-colors duration-200",
                       currentThreadId === thread.thread_id && "bg-white/10 text-white"
                     )}
-                    onClick={() => handleThreadClick(thread.thread_id)}
+                    onClick={() => onThreadClick(thread.thread_id)}
                   >
                     <MessageSquareTextIcon className={cn("w-4 h-4", !isSidebarCollapsed && "mr-2 text-white/60")} />
                     {!isSidebarCollapsed && (
@@ -146,7 +121,7 @@ export function ChatLayout({ children, currentThreadId, setCurrentThreadId }: Ch
                       className="absolute right-0 text-white/50 hover:text-red-400 hover:bg-white/10 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200"
                       onClick={(e) => {
                         e.stopPropagation(); // Prevent thread selection when deleting
-                        handleDeleteThread(thread.thread_id);
+                        onDeleteThread(thread.thread_id);
                       }}
                       aria-label="Delete thread"
                     >

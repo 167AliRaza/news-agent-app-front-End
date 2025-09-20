@@ -10,7 +10,7 @@ import { ChatMessage } from "@/components/chat/chat-message";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Toaster } from "@/components/ui/toaster";
 import { toast } from "@/hooks/use-toast";
-import { logoutUser, sendMessageToAgent, fetchThreadMessages } from "@/lib/api"; // Import fetchThreadMessages
+import { logoutUser, sendMessageToAgent, fetchThreadMessages, fetchUserThreads, deleteThread } from "@/lib/api";
 
 interface Message {
   id: string;
@@ -18,23 +18,41 @@ interface Message {
   isUser: boolean;
 }
 
+interface Thread {
+  thread_id: string;
+  title: string;
+}
+
 export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
-  const [isLoadingMessages, setIsLoadingMessages] = useState(false); // New loading state for messages
-  const [currentThreadId, setCurrentThreadId] = useState<string | null>(null); // State for current thread ID
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+  const [currentThreadId, setCurrentThreadId] = useState<string | null>(null);
+  const [threads, setThreads] = useState<Thread[]>([]);
+  const [isLoadingThreads, setIsLoadingThreads] = useState(true);
   const router = useRouter();
 
-  // Effect to fetch messages when currentThreadId changes
+  const loadThreads = async () => {
+    setIsLoadingThreads(true);
+    const fetchedThreads = await fetchUserThreads();
+    if (fetchedThreads) {
+      setThreads(fetchedThreads);
+    }
+    setIsLoadingThreads(false);
+  };
+
+  useEffect(() => {
+    loadThreads();
+  }, []);
+
   useEffect(() => {
     const loadThreadConversation = async () => {
-      if (currentThreadId) {
+      if (currentThreadId && !currentThreadId.startsWith('local-')) { // Don't fetch for local threads
         setIsLoadingMessages(true);
-        setMessages([]); // Clear messages before loading new ones
+        setMessages([]);
         const fetchedMessages = await fetchThreadMessages(currentThreadId);
         if (fetchedMessages) {
-          // Map fetched messages to the local Message interface
           const formattedMessages: Message[] = fetchedMessages.map(msg => ({
             id: msg.id,
             text: msg.text,
@@ -43,8 +61,8 @@ export default function ChatPage() {
           setMessages(formattedMessages);
         }
         setIsLoadingMessages(false);
-      } else {
-        setMessages([]); // Clear messages if no thread is selected (new chat)
+      } else if (!currentThreadId) {
+        setMessages([]);
       }
     };
 
@@ -66,11 +84,26 @@ export default function ChatPage() {
     setInputMessage("");
     setIsSending(true);
 
+    let threadIdToUse = currentThreadId;
+    let isNewChat = !currentThreadId;
+    let localThreadId: string | null = null;
+
+    if (isNewChat) {
+      localThreadId = `local-${Date.now()}`;
+      const newThread: Thread = {
+        thread_id: localThreadId,
+        title: userQueryText.substring(0, 30) + (userQueryText.length > 30 ? '...' : ''),
+      };
+      setThreads(prev => [newThread, ...prev]);
+      setCurrentThreadId(localThreadId);
+      threadIdToUse = null; // Send null to API to create new thread
+    }
+
     try {
       const response = await sendMessageToAgent(
         userQueryText,
-        currentThreadId,
-        !currentThreadId // create_new_thread if no currentThreadId
+        threadIdToUse,
+        isNewChat
       );
 
       if (response) {
@@ -85,8 +118,14 @@ export default function ChatPage() {
         };
         setMessages((prevMessages) => [...prevMessages, newAiMessage]);
 
-        if (response.is_new_thread || !currentThreadId) {
+        if (response.is_new_thread && localThreadId) {
+          // Update local thread with real ID from backend
+          setThreads(prev => prev.map(t => 
+            t.thread_id === localThreadId ? { ...t, thread_id: response.thread_id } : t
+          ));
           setCurrentThreadId(response.thread_id);
+          // After a new thread is successfully created, reload all threads to get the server-generated title
+          await loadThreads();
         }
       }
     } catch (error) {
@@ -96,6 +135,11 @@ export default function ChatPage() {
         description: "Failed to get a response from the AI. Please try again.",
         variant: "destructive",
       });
+      // If it was a new chat that failed, remove the local thread
+      if (localThreadId) {
+        setThreads(prev => prev.filter(t => t.thread_id !== localThreadId));
+        setCurrentThreadId(null);
+      }
     } finally {
       setIsSending(false);
     }
@@ -103,6 +147,27 @@ export default function ChatPage() {
 
   const handleLogout = async () => {
     await logoutUser(router);
+  };
+
+  const handleNewChat = () => {
+    setCurrentThreadId(null);
+    setMessages([]);
+  };
+
+  const handleThreadClick = (threadId: string) => {
+    setCurrentThreadId(threadId);
+  };
+
+  const handleDeleteThread = async (threadId: string) => {
+    if (window.confirm("Are you sure you want to delete this thread? This action cannot be undone.")) {
+      const success = await deleteThread(threadId);
+      if (success) {
+        if (currentThreadId === threadId) {
+          setCurrentThreadId(null);
+        }
+        await loadThreads();
+      }
+    }
   };
 
   return (
@@ -117,7 +182,11 @@ export default function ChatPage() {
     >
       <ChatLayout
         currentThreadId={currentThreadId}
-        setCurrentThreadId={setCurrentThreadId}
+        threads={threads}
+        isLoadingThreads={isLoadingThreads}
+        onNewChat={handleNewChat}
+        onThreadClick={handleThreadClick}
+        onDeleteThread={handleDeleteThread}
       >
         <div className="flex flex-col h-full">
           <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-4">
